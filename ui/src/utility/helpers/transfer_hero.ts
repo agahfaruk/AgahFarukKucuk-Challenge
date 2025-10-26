@@ -10,6 +10,10 @@ export const transferHero = (heroId: string, to: string) => {
     // Use tx.object() for object IDs
     // Use "to" for the address
     // This is a simple object transfer, not a moveCall
+  tx.transferObjects(
+    [tx.object(heroId)],
+    tx.pure.address(to),
+  );
   
   return tx;
 };

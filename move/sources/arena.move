@@ -36,15 +36,15 @@ public fun create_arena(hero: Hero, ctx: &mut TxContext) {
     let arena = Arena{
         id: object::new(ctx),
         warrior: hero,
-        owner: tx.context::sender(ctx),
+        owner: tx_context::sender(ctx),
     };
         
     // TODO: Emit ArenaCreated event with arena ID and timestamp (Don't forget to use ctx.epoch_timestamp_ms(), object::id(&arena))
     event::emit(ArenaCreated{
         arena_id: object::id(&arena),
-        timestamp: ctx.epoch_timestamp_ms(),
+        timestamp: tx_context::epoch_timestamp_ms(ctx),
     });
-    
+
     // TODO: Use transfer::share_object() to make it publicly tradeable
     transfer::share_object(arena);
 }
@@ -57,29 +57,33 @@ public fun battle(hero: Hero, arena: Arena, ctx: &mut TxContext) {
         // Destructure arena to get id, warrior, and owner
         let Arena{id, warrior, owner}= arena;
 
+        let hero_id = object::id(&hero);
+        let warrior_id = object::id(&warrior);
     // TODO: Compare hero.hero_power() with warrior.hero_power()
         // Hints: 
         // If hero wins: both heroes go to ctx.sender()
-        if (hero.power > warrior.power){
-            transfer::transfer(hero, ctx_sender()),
-            transfer::transfer(warrior, ctx_sender()),
+        if (challenge::hero::hero_power(&hero) > challenge::hero::hero_power(&warrior)){
+            transfer::public_transfer(hero, tx_context::sender(ctx));
+            transfer::public_transfer(warrior, tx_context::sender(ctx));
 
-            event:emit(ArenaCompleted{
-                winner_hero_id: object::id(&hero),
-                loser_hero_id: object::id(&warrior),
-            })
+            event::emit(ArenaCompleted{
+                winner_hero_id: hero_id,
+                loser_hero_id: warrior_id,
+                timestamp: tx_context::epoch_timestamp_ms(ctx),
+            });
         }
 
         // If warrior wins: both heroes go to battle place owner
         else {
-            transfer::transfer(hero, owner),
-            transfer::transfer(warrior, owner),
+            transfer::public_transfer(hero, owner);
+            transfer::public_transfer(warrior, owner);
 
-            event:emit(ArenaCompleted{
-                winner_hero_id: object::id(&warrior),
-                loser_hero_id: object::id(&hero),
-            })
-        }
+            event::emit(ArenaCompleted{
+                winner_hero_id: warrior_id,
+                loser_hero_id: hero_id,
+                timestamp: tx_context::epoch_timestamp_ms(ctx),
+            });
+        };
 
     // TODO:  Emit BattlePlaceCompleted event with winner/loser IDs (Don't forget to use object::id(&warrior) or object::id(&hero) ). 
         // Hints:  

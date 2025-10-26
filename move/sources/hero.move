@@ -32,18 +32,18 @@ public fun create_hero(name: String, image_url: String, power: u64, ctx: &mut Tx
     };
 
     // TODO: Transfer the hero to the transaction sender
-    transfer::transfer(hero, tx.context::sender(ctx));
+    transfer::transfer(hero, tx_context::sender(ctx));
 
     // TODO: Create HeroMetadata and freeze it for tracking
         // Hints:
         // Use ctx.epoch_timestamp_ms() for timestamp
-    let heroMetaData = HeroMetaData {
+    let hero_metadata = HeroMetadata {
         id: object::new(ctx),
-        timestamp: ctx.epoch_timestamp_ms(),
+        timestamp: tx_context::epoch_timestamp_ms(ctx),
     };
 
     //TODO: Use transfer::freeze_object() to make metadata immutable
-    transfer::freeze_object();
+    transfer::public_freeze_object(hero_metadata);
 }
 
 // ========= GETTER FUNCTIONS =========
